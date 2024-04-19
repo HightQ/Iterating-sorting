@@ -1,0 +1,123 @@
+local Iterate = {}
+Iterate.__index = Iterate
+
+function Iterate.New(WrapFuncts : boolean, separator : string)
+	local self = setmetatable({}, Iterate)
+	self.WrapFuncts = WrapFuncts
+	self.Separator = separator
+	if self.WrapFuncts then
+		for _, v in self do
+			if typeof(v) == "function" then
+				v = coroutine.wrap(function()
+					v()
+				end)()
+			end
+		end
+	end
+	self.Concat = function(Arr)
+		if self.Separator then
+			return table.concat(Arr, self.Separator)
+		end
+		return nil
+	end
+	return self
+end
+
+local function CheckIfInstance(Arr)
+	if typeof(Arr) == "table" then
+		Arr = table.clone(Arr)
+	elseif typeof(Arr) == "Instance" then
+		Arr = table.clone(Arr:GetChildren())
+	else
+		 error("[[Loop Error: Pasted value can't be iterated true]]")
+	end
+	return Arr
+end
+
+local function GetInstanceName(value)
+	if typeof(value) == "Instance" then
+		value = value.Name
+	end
+	return value
+end
+
+
+function Iterate:IterateIpairs<T>(array : {T} | Instance, callback : (number, T) -> any?, Index : number)
+	local Ind = Index or 1 
+	local Array = CheckIfInstance(array)
+		local CurrentThing = Array[Ind]
+	if Ind > #Array then
+		return
+	end
+	callback(Ind, CurrentThing)
+	Ind += 1
+	self:IterateIpairs(Array, callback, Ind)
+end
+
+function Iterate:Bubblesort<T>(Arr : {T} | Instance,  predicate : (number, T) -> T, NewArray) : {T}
+	predicate = predicate or function(nextt, v)
+		return nextt < v
+	end
+	local Arr = CheckIfInstance(Arr)
+	local nextt
+	local HadToMove = false
+	for i, v in Arr do
+		if i == #Arr then
+			break
+		end
+		nextt = GetInstanceName(Arr[i + 1])
+		v = GetInstanceName(v)
+		if predicate(nextt, v) then
+			HadToMove = true
+			Arr[i] = nextt; Arr[i + 1] =  v
+		end
+	end
+	if not HadToMove then
+		return self.Concat(Arr) or Arr
+	end
+	return self:Bubblesort(Arr)
+end
+
+function Iterate:SelectionSort<T>(Arr : {T} | Instance,  predicate : (number, T) -> T, NewArray) : {T}
+	predicate = predicate or function(Numb, v)
+		return Numb > v
+	end
+	local Arr = CheckIfInstance(Arr)
+	local NewArr = NewArray or {}
+	local SmallestInt; local SmallestIntInd 
+	for i, v in Arr do
+		v = GetInstanceName(v)
+		if not SmallestInt then SmallestInt = v SmallestIntInd = i continue end
+		if #Arr == 1 then SmallestInt = v SmallestIntInd = i break end
+		if predicate(SmallestInt, v) then
+			SmallestInt = v; SmallestIntInd = i 
+		end
+	end
+	if #Arr == 0 then
+		return self.Concat(NewArr) or NewArr
+	end
+	table.remove(Arr, SmallestIntInd)
+	table.insert(NewArr, SmallestInt)
+	return self:SelectionSort(Arr, predicate, NewArr)
+end
+
+function Iterate:InsertionSort<T>(Arr : {T} | Instance,  predicate : (number, T) -> T, StartingIndex) : {T}
+	predicate = predicate or function(Smallest, v)
+		return Smallest > v
+	end
+	local Arr = CheckIfInstance(Arr)
+	local StartingIndex = StartingIndex or 2
+	for i, v in Arr do
+		if i < StartingIndex then continue end
+		for prec = (i-1), 1, -1 do
+			local Numb = GetInstanceName(Arr[prec])
+			v = GetInstanceName(v)
+			if predicate(Numb, v) then
+				Arr[prec] = v; Arr[prec + 1] = Numb
+			end
+		end
+	end	
+	return self.Concat(Arr) or Arr
+end
+
+return Iterate
