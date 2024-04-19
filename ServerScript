@@ -1,0 +1,12 @@
+--Exemple of things to do
+local ar = {"Hello", "HI", "GOodNight", "Morning", "Alpha", "Beta", "#Fisrt", "VLAst"}
+
+local Iterate = require(game:GetService("ServerScriptService").Iterating)
+local NewIt = Iterate.New(false)
+print(NewIt:InsertionSort(ar, nil, 2))
+print(NewIt:BubblesortSort(workspace, function(prec, v)
+	return prec > v
+end))
+NewIt:IterateIpairs(game, function(i, v)
+	print(i, v)
+end)
